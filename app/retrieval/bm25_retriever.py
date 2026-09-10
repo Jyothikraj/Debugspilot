@@ -1,3 +1,4 @@
+
 import re
 
 from rank_bm25 import BM25Okapi
@@ -11,28 +12,35 @@ def tokenize_code(text):
     """
     Convert source code or a query into
     searchable tokens.
+
+    Handles:
+    - normal identifiers
+    - snake_case identifiers
     """
 
     text = text.lower()
 
     tokens = re.findall(
         r"[a-zA-Z_][a-zA-Z0-9_]*",
-        text
+        text,
     )
 
     expanded_tokens = []
 
     for token in tokens:
 
-        expanded_tokens.append(
-            token
-        )
+        # Keep complete identifier
+        expanded_tokens.append(token)
 
         # Expand snake_case identifiers
         if "_" in token:
 
+            parts = token.split("_")
+
             expanded_tokens.extend(
-                token.split("_")
+                part
+                for part in parts
+                if part
             )
 
     return expanded_tokens
@@ -46,8 +54,7 @@ class BM25Retriever:
 
     def __init__(self, chunks):
         """
-        Build a BM25 index from the chunks
-        produced by the ingestion pipeline.
+        Build a BM25 index from repository chunks.
         """
 
         self.chunks = chunks
@@ -76,6 +83,9 @@ class BM25Retriever:
         Search code chunks using BM25.
         """
 
+        if not self.chunks:
+            return []
+
         tokenized_query = tokenize_code(
             query
         )
@@ -95,9 +105,21 @@ class BM25Retriever:
         for index in ranked_indexes[:k]:
 
             results.append({
-                "content": self.chunks[index]["content"],
-                "metadata": self.chunks[index]["metadata"],
-                "score": float(scores[index]),
+                "id": self.chunks[
+                    index
+                ].get("id"),
+
+                "content": self.chunks[
+                    index
+                ]["content"],
+
+                "metadata": self.chunks[
+                    index
+                ]["metadata"],
+
+                "score": float(
+                    scores[index]
+                ),
             })
 
         return results

@@ -1,3 +1,4 @@
+
 import chromadb
 import uuid
 import ollama
@@ -13,7 +14,7 @@ client = chromadb.PersistentClient(
 
 
 # --------------------------------------------------
-# Collection
+# ChromaDB Collection
 # --------------------------------------------------
 
 collection = client.get_or_create_collection(
@@ -22,20 +23,18 @@ collection = client.get_or_create_collection(
 
 
 # --------------------------------------------------
-# Sanitize Metadata
+# Metadata Sanitization
 # --------------------------------------------------
 
 def sanitize_metadata(metadata):
     """
-    Convert chunk metadata into values
-    accepted by ChromaDB.
+    Make metadata compatible with ChromaDB.
     """
 
     clean_metadata = {}
 
     for key, value in metadata.items():
 
-        # Chroma does not accept None
         if value is None:
             continue
 
@@ -64,22 +63,71 @@ def sanitize_metadata(metadata):
 
 
 # --------------------------------------------------
+# Embedding Text
+# --------------------------------------------------
+
+def get_embedding_text(chunk):
+    """
+    Build the text used for semantic embedding.
+
+    The Gemini-generated summary is combined with
+    the original code so that embeddings contain
+    both conceptual and implementation information.
+    """
+
+    summary = chunk["metadata"].get(
+        "summary",
+        ""
+    ).strip()
+
+    content = chunk["content"].strip()
+
+    if summary:
+        return (
+            f"Summary:\n"
+            f"{summary}\n\n"
+            f"Code:\n"
+            f"{content}"
+        )
+
+    # Fallback for chunks without a summary
+    return content
+
+
+# --------------------------------------------------
 # Store Chunks
 # --------------------------------------------------
 
-def store_chunks(chunks):
+def store_chunks(chunks, repository_id):
     """
-    Generate embeddings using Ollama and store
-    the chunks and embeddings in ChromaDB.
+    Generate embeddings for code chunks
+    and store them in ChromaDB.
+
+    Each chunk is tagged with its repository_id
+    so retrieval can be restricted to one repository.
+
+    Original code is stored as the Chroma document.
+
+    Gemini summary + original code are used
+    as the embedding input.
     """
 
     if not chunks:
-        print("DEBUG: No chunks to store.")
+
+        print(
+            "DEBUG: No chunks to store."
+        )
+
         return 0
+
+    # --------------------------------------------------
+    # Prepare Storage Data
+    # --------------------------------------------------
 
     documents = []
     metadatas = []
     ids = []
+    embedding_inputs = []
 
     for chunk in chunks:
 
@@ -89,16 +137,40 @@ def store_chunks(chunks):
             chunk["metadata"]
         )
 
+        # IMPORTANT:
+        # Associate every chunk with its repository
+        metadata["repository_id"] = repository_id
+
+        # --------------------------------------------------
+        # Store ORIGINAL CODE
+        # --------------------------------------------------
+
         documents.append(
             content
         )
+
+        # --------------------------------------------------
+        # Store metadata
+        # --------------------------------------------------
 
         metadatas.append(
             metadata
         )
 
+        # --------------------------------------------------
+        # Unique ID
+        # --------------------------------------------------
+
         ids.append(
             str(uuid.uuid4())
+        )
+
+        # --------------------------------------------------
+        # Prepare embedding input
+        # --------------------------------------------------
+
+        embedding_inputs.append(
+            get_embedding_text(chunk)
         )
 
     print(
@@ -106,16 +178,17 @@ def store_chunks(chunks):
     )
 
     # --------------------------------------------------
-    # Generate embeddings
+    # Generate Embeddings
     # --------------------------------------------------
 
     print(
-        "DEBUG: Generating Ollama embeddings..."
+        "DEBUG: Generating Ollama embeddings "
+        "(summary + code)..."
     )
 
     response = ollama.embed(
         model="nomic-embed-text",
-        input=documents,
+        input=embedding_inputs,
     )
 
     print(
@@ -125,12 +198,16 @@ def store_chunks(chunks):
     embeddings = response["embeddings"]
 
     print(
-        f"DEBUG: Embeddings generated: {len(embeddings)}"
+        f"DEBUG: Embeddings generated: "
+        f"{len(embeddings)}"
     )
 
-    print(
-        f"DEBUG: Embedding dimension: {len(embeddings[0])}"
-    )
+    if embeddings:
+
+        print(
+            f"DEBUG: Embedding dimension: "
+            f"{len(embeddings[0])}"
+        )
 
     # --------------------------------------------------
     # Store in ChromaDB
@@ -152,3 +229,46 @@ def store_chunks(chunks):
     )
 
     return len(chunks)
+
+
+# --------------------------------------------------
+# Get Repository Chunks
+# --------------------------------------------------
+
+def get_repository_chunks(repository_id):
+    """
+    Retrieve all chunks belonging to a specific
+    repository from ChromaDB.
+
+    These chunks are used to build the BM25 index.
+    """
+
+    results = collection.get(
+        where={
+            "repository_id": repository_id
+        },
+        include=[
+            "documents",
+            "metadatas",
+        ],
+    )
+
+    chunks = []
+
+    for i in range(
+        len(results["ids"])
+    ):
+
+        chunks.append({
+            "id": results["ids"][i],
+
+            "content": results[
+                "documents"
+            ][i],
+
+            "metadata": results[
+                "metadatas"
+            ][i],
+        })
+
+    return chunks

@@ -1,3 +1,4 @@
+
 import chromadb
 import ollama
 
@@ -24,10 +25,10 @@ collection = client.get_collection(
 # Vector Retrieval
 # --------------------------------------------------
 
-def retrieve(query, k=3):
+def retrieve(query, repository_id, k=3):
     """
     Retrieve the most semantically relevant
-    chunks from ChromaDB.
+    chunks from a specific repository.
     """
 
     # --------------------------------------------------
@@ -39,12 +40,12 @@ def retrieve(query, k=3):
         input=query,
     )
 
-    query_embedding = response[
-        "embeddings"
-    ][0]
+    query_embedding = response["embeddings"][0]
+
 
     # --------------------------------------------------
     # Search ChromaDB
+    # Only retrieve chunks from this repository
     # --------------------------------------------------
 
     results = collection.query(
@@ -52,7 +53,11 @@ def retrieve(query, k=3):
             query_embedding
         ],
         n_results=k,
+        where={
+            "repository_id": repository_id
+        },
     )
+
 
     # --------------------------------------------------
     # Format Results
@@ -65,7 +70,6 @@ def retrieve(query, k=3):
     ):
 
         retrieved_chunks.append({
-
             "id": results["ids"][0][i],
 
             "content": results[
@@ -81,6 +85,7 @@ def retrieve(query, k=3):
             ][0][i],
         })
 
+
     return retrieved_chunks
 
 
@@ -94,10 +99,13 @@ if __name__ == "__main__":
         "Which method cancels an order?"
     )
 
+
     results = retrieve(
         query,
+        repository_id=3,
         k=3,
     )
+
 
     for result in results:
 
@@ -116,6 +124,13 @@ if __name__ == "__main__":
             "Function:",
             result["metadata"].get(
                 "function"
+            )
+        )
+
+        print(
+            "Repository ID:",
+            result["metadata"].get(
+                "repository_id"
             )
         )
 

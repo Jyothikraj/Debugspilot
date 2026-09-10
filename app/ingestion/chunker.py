@@ -1,4 +1,5 @@
 
+
 from app.ingestion.file_parser import parse_file
 from app.ingestion.file_scanner import scan_project
 
@@ -23,6 +24,8 @@ from app.ingestion.cpp_parser import (
 )
 
 
+
+
 # ============================================================
 # VALIDATION
 # ============================================================
@@ -37,7 +40,6 @@ def is_valid_chunk(chunk):
 # ============================================================
 
 def normalize_metadata(data):
-
     return {
         "file": str(data.get("file", "")),
         "language": str(data.get("language", "")),
@@ -54,7 +56,6 @@ def normalize_metadata(data):
 # ============================================================
 
 def create_code_chunk(code_data):
-
     chunk = {
         "content": code_data.get("content", ""),
         "metadata": normalize_metadata(code_data),
@@ -68,11 +69,9 @@ def create_code_chunk(code_data):
 # ============================================================
 
 def create_chunks(code_units):
-
     chunks = []
 
     for code_unit in code_units:
-
         chunk = create_code_chunk(code_unit)
 
         if is_valid_chunk(chunk):
@@ -86,23 +85,19 @@ def create_chunks(code_units):
 # ============================================================
 
 def create_text_chunk(file_path, parsed_file):
-
     content = parsed_file.get("content", "")
 
     if not content.strip():
         return None
 
-    language = parsed_file.get(
-        "metadata",
-        {}
-    ).get(
-        "language",
-        "unknown"
+    language = (
+        parsed_file
+        .get("metadata", {})
+        .get("language", "unknown")
     )
 
     return {
         "content": content,
-
         "metadata": {
             "file": str(file_path),
             "language": str(language),
@@ -120,7 +115,6 @@ def create_text_chunk(file_path, parsed_file):
 # ============================================================
 
 def chunk_python_file(file_path, parsed_file):
-
     code = parsed_file["content"]
 
     tree = parse_python_code(code)
@@ -138,9 +132,7 @@ def chunk_python_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for function in structure.get("functions", []):
-
         function["type"] = "function"
-
         code_units.append(function)
 
     # --------------------------------------------------------
@@ -148,9 +140,7 @@ def chunk_python_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for class_data in structure.get("classes", []):
-
         class_data["type"] = "class"
-
         code_units.append(class_data)
 
     # --------------------------------------------------------
@@ -158,7 +148,6 @@ def chunk_python_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     if not code_units:
-
         chunk = create_text_chunk(
             file_path,
             parsed_file,
@@ -174,7 +163,6 @@ def chunk_python_file(file_path, parsed_file):
 # ============================================================
 
 def chunk_javascript_file(file_path, parsed_file):
-
     code = parsed_file["content"]
 
     tree = parse_javascript_code(code)
@@ -192,9 +180,7 @@ def chunk_javascript_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for function in structure.get("functions", []):
-
         function["type"] = "function"
-
         code_units.append(function)
 
     # --------------------------------------------------------
@@ -202,9 +188,7 @@ def chunk_javascript_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for class_data in structure.get("classes", []):
-
         class_data["type"] = "class"
-
         code_units.append(class_data)
 
     # --------------------------------------------------------
@@ -212,7 +196,6 @@ def chunk_javascript_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     if not code_units:
-
         chunk = create_text_chunk(
             file_path,
             parsed_file,
@@ -228,7 +211,6 @@ def chunk_javascript_file(file_path, parsed_file):
 # ============================================================
 
 def chunk_java_file(file_path, parsed_file):
-
     code = parsed_file["content"]
 
     tree = parse_java_code(code)
@@ -246,9 +228,7 @@ def chunk_java_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for function in structure.get("functions", []):
-
         function["type"] = "function"
-
         code_units.append(function)
 
     # --------------------------------------------------------
@@ -256,9 +236,7 @@ def chunk_java_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     for class_data in structure.get("classes", []):
-
         class_data["type"] = "class"
-
         code_units.append(class_data)
 
     # --------------------------------------------------------
@@ -266,7 +244,6 @@ def chunk_java_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     if not code_units:
-
         chunk = create_text_chunk(
             file_path,
             parsed_file,
@@ -282,7 +259,6 @@ def chunk_java_file(file_path, parsed_file):
 # ============================================================
 
 def chunk_cpp_file(file_path, parsed_file):
-
     code = parsed_file["content"]
 
     print(
@@ -343,7 +319,6 @@ def chunk_cpp_file(file_path, parsed_file):
     # --------------------------------------------------------
 
     if not code_units:
-
         chunk = create_text_chunk(
             file_path,
             parsed_file,
@@ -366,7 +341,6 @@ def chunk_cpp_file(file_path, parsed_file):
 # ============================================================
 
 def chunk_project(files):
-
     all_chunks = []
 
     total_files = len(files)
@@ -380,7 +354,6 @@ def chunk_project(files):
         files,
         start=1,
     ):
-
         print(
             f"[{index}/{total_files}] {file_path.name}",
             flush=True,
@@ -403,7 +376,6 @@ def chunk_project(files):
             # ------------------------------------------------
 
             if extension == ".py":
-
                 chunks = chunk_python_file(
                     file_path,
                     parsed_file,
@@ -419,7 +391,6 @@ def chunk_project(files):
                 ".ts",
                 ".tsx",
             }:
-
                 chunks = chunk_javascript_file(
                     file_path,
                     parsed_file,
@@ -430,7 +401,6 @@ def chunk_project(files):
             # ------------------------------------------------
 
             elif extension == ".java":
-
                 chunks = chunk_java_file(
                     file_path,
                     parsed_file,
@@ -448,7 +418,6 @@ def chunk_project(files):
                 ".h",
                 ".hpp",
             }:
-
                 chunks = chunk_cpp_file(
                     file_path,
                     parsed_file,
@@ -459,7 +428,6 @@ def chunk_project(files):
             # ------------------------------------------------
 
             else:
-
                 chunk = create_text_chunk(
                     file_path,
                     parsed_file,
@@ -479,7 +447,6 @@ def chunk_project(files):
             )
 
         except Exception as error:
-
             print(
                 f"    ERROR: "
                 f"{type(error).__name__}: {error}",
@@ -488,11 +455,24 @@ def chunk_project(files):
 
             continue
 
+    # ========================================================
+    # CHUNKING COMPLETE
+    # ========================================================
+
     print(
         f"\nChunking completed: "
         f"{len(all_chunks)} total chunks",
         flush=True,
     )
+
+    # ========================================================
+    # GEMINI SUMMARIZATION
+    # ========================================================
+
+    
+        
+
+        
 
     return all_chunks
 
@@ -502,8 +482,18 @@ def chunk_project(files):
 # ============================================================
 
 def get_embedding_text(chunk):
+    summary = chunk["metadata"].get(
+        "summary",
+        "",
+    )
 
-    return chunk["content"]
+    return f"""
+Summary:
+{summary}
+
+Code:
+{chunk["content"]}
+""".strip()
 
 
 # ============================================================
@@ -565,6 +555,14 @@ if __name__ == "__main__":
             metadata["start_line"],
             "-",
             metadata["end_line"],
+        )
+
+        print(
+            "Summary:",
+            metadata.get(
+                "summary",
+                "",
+            ),
         )
 
         print(

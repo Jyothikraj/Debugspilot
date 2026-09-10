@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Explain Code · CodeSense</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Theme initialization (prevents screen flashing) -->
+    <script src="js/theme.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="chat.html" class="logo">
+            <span class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m16 18 6-6-6-6"/>
+                    <path d="m8 6-6 6 6 6"/>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+            </span>
+            Code<span>Sense</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="dashboard.html">Repository</a>
+
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                🌙
+            </button>
+
+            <button id="logoutButton" class="nav-button">
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <main class="chat-page">
+
+        <div class="chat-container">
+
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="dashboard-badge">
+                    CODE EXPLORER
+                </div>
+
+                <h1>
+                    Ask about your codebase
+                </h1>
+
+                <p>
+                    Ask for logic breakdowns, module overviews, or line-by-line code explanations.
+                </p>
+            </div>
+
+            <!-- Messages -->
+            <div id="chatMessages" class="chat-messages">
+
+                <div class="message assistant-message">
+                    <div class="message-label">
+                        CodeSense
+                    </div>
+                    <p>
+                        Your repository is ready. Ask me to explain a function, trace data flow, or summarize any file in your project.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- RAG Processing -->
+            <div id="processingPanel" class="processing-panel hidden">
+
+                <div class="processing-header">
+                    <span>
+                        Searching & Synthesizing Code
+                    </span>
+
+                    <span id="generationTimer">
+                        0.0s
+                    </span>
+                </div>
+
+                <div class="rag-steps">
+
+                    <div class="rag-step" id="rag-retrieving">
+                        <span class="rag-icon">○</span>
+                        <span>Retrieving syntax chunks</span>
+                    </div>
+
+                    <div class="rag-step" id="rag-reranking">
+                        <span class="rag-icon">○</span>
+                        <span>Reranking code context</span>
+                    </div>
+
+                    <div class="rag-step" id="rag-context">
+                        <span class="rag-icon">○</span>
+                        <span>Assembling logic path</span>
+                    </div>
+
+                    <div class="rag-step" id="rag-generating">
+                        <span class="rag-icon">○</span>
+                        <span>Generating explanation</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Chat Input -->
+            <form id="chatForm" class="chat-input-area">
+
+                <textarea
+                    id="chatInput"
+                    placeholder="e.g., How does authentication work in auth.py? Or explain the handlePayment flow..."
+                    rows="2"
+                    required
+                ></textarea>
+
+                <button
+                    type="submit"
+                    id="sendButton"
+                    class="auth-button"
+                >
+                    Explain
+                </button>
+
+            </form>
+
+        </div>
+
+    </main>
+
+    <script src="js/chat.js"></script>
+
+</body>
+</html>

@@ -95,14 +95,15 @@ def delete_repository(repository_path):
 # Load Repository
 # ======================================================
 
-def load_repository(repo_url):
+
+
+def load_repository(repo_url, repository_id):
 
     repository_path = clone_repository(
         repo_url
     )
 
     try:
-
         # --------------------------------------------------
         # Scan repository
         # --------------------------------------------------
@@ -132,7 +133,8 @@ def load_repository(repo_url):
         # --------------------------------------------------
 
         stored_count = store_chunks(
-            chunks
+            chunks,
+            repository_id,
         )
 
         print(

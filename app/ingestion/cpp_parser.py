@@ -57,15 +57,15 @@ def extract_cpp_structure(
     source_code
 ):
     """
-    Extract only C++ classes and functions.
+    Extract simple C++ structure.
 
-    No complicated metadata extraction.
+    Extracts only:
 
-    Function bodies are never traversed.
+        - classes
+        - structs
+        - functions
 
-    Output:
-        functions
-        classes
+    Function bodies are not recursively traversed.
     """
 
     functions = []
@@ -115,21 +115,18 @@ def extract_cpp_structure(
                     node.end_point.row + 1,
             })
 
-            # IMPORTANT
-            #
-            # Do not traverse inside the function.
-            #
-            # This prevents walking through every
-            # statement/expression in the function body.
-
+            # Do not traverse inside function body.
             return
 
 
         # ----------------------------------------------------
-        # CLASS
+        # CLASS / STRUCT
         # ----------------------------------------------------
 
-        if node.type == "class_specifier":
+        if node.type in {
+            "class_specifier",
+            "struct_specifier",
+        }:
 
             name_node = node.child_by_field_name(
                 "name"
@@ -143,6 +140,7 @@ def extract_cpp_structure(
                     name_node,
                     source_code
                 )
+
 
             classes.append({
 
@@ -171,13 +169,10 @@ def extract_cpp_structure(
             })
 
 
-            # ------------------------------------------------
-            # Traverse class children.
+            # Traverse the class/struct body.
             #
-            # If a function_definition is encountered,
-            # walk() returns immediately and does not enter
-            # the function body.
-            # ------------------------------------------------
+            # Function definitions are detected,
+            # and walk() immediately returns for them.
 
             for child in node.children:
 
@@ -190,7 +185,7 @@ def extract_cpp_structure(
 
 
         # ----------------------------------------------------
-        # OTHER STRUCTURAL NODES
+        # OTHER AST NODES
         # ----------------------------------------------------
 
         for child in node.children:
@@ -202,7 +197,7 @@ def extract_cpp_structure(
 
 
     # ========================================================
-    # START AST WALK
+    # START
     # ========================================================
 
     walk(

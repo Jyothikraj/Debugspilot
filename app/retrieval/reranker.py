@@ -19,11 +19,11 @@ model = CrossEncoder(
 def rerank(
     query,
     results,
-    k=3,
+    k=10,
 ):
     """
-    Rerank retrieved code chunks using
-    a Cross-Encoder model.
+    Rerank already-retrieved hybrid search results
+    using a Cross-Encoder model.
     """
 
     if not results:
@@ -36,7 +36,14 @@ def rerank(
     pairs = [
         (
             query,
-            result["content"]
+            f"""
+    File: {result['metadata'].get('file', '')}
+    Class: {result['metadata'].get('class', '')}
+    Function: {result['metadata'].get('function', '')}
+
+    Code:
+    {result['content']}
+    """,
         )
         for result in results
     ]
@@ -45,9 +52,7 @@ def rerank(
     # Predict relevance scores
     # --------------------------------------------------
 
-    scores = model.predict(
-        pairs
-    )
+    scores = model.predict(pairs)
 
     # --------------------------------------------------
     # Attach scores
@@ -55,29 +60,37 @@ def rerank(
 
     reranked = []
 
-    for result, score in zip(
-        results,
-        scores,
-    ):
+    for result, score in zip(results, scores):
 
         result = result.copy()
 
-        result["rerank_score"] = float(
-            score
-        )
+        result["rerank_score"] = float(score)
 
-        reranked.append(
-            result
-        )
+        reranked.append(result)
 
     # --------------------------------------------------
-    # Sort by relevance
+    # Sort by Cross-Encoder score
     # --------------------------------------------------
 
     reranked.sort(
-        key=lambda x: x["rerank_score"],
-        reverse=True,
+    key=lambda x: x["rerank_score"],
+    reverse=True,
     )
+
+    print("\n" + "=" * 70)
+    print("RERANKING ORDER")
+    print("=" * 70)
+
+    for rank, result in enumerate(reranked, start=1):
+        metadata = result["metadata"]
+
+        print(
+            f"Rank {rank} | "
+            f"Score: {result['rerank_score']:.4f} | "
+            f"File: {metadata.get('file')} | "
+            f"Class: {metadata.get('class')} | "
+            f"Function: {metadata.get('function')}"
+        )
 
     return reranked[:k]
 
@@ -88,24 +101,8 @@ def rerank(
 
 if __name__ == "__main__":
 
-    query = "cancel order"
-
-    # --------------------------------------------------
-    # Load chunks
-    # --------------------------------------------------
-
-    from app.ingestion.file_scanner import scan_project
-    from app.ingestion.chunker import chunk_project
-
-    project_path = "test_project"
-
-    files = scan_project(
-        project_path
-    )
-
-    chunks = chunk_project(
-        files
-    )
+    query = "How does the core recipe recommendation logic work?"
+    repository_id = 4
 
     # --------------------------------------------------
     # Hybrid Retrieval
@@ -113,65 +110,83 @@ if __name__ == "__main__":
 
     hybrid_results = hybrid_search(
         query,
-        chunks,
-        k=3,
+        repository_id=repository_id,
+        k=30,
     )
+
+    print("\n" + "=" * 60)
+    print("HYBRID RESULTS")
+    print("=" * 60)
+
+    for result in hybrid_results:
+
+        print("\n--- HYBRID RESULT ---")
+
+        print(
+            "File:",
+            result["metadata"].get("file"),
+        )
+
+        print(
+            "Function:",
+            result["metadata"].get("function"),
+        )
+
+        print(
+            "Class:",
+            result["metadata"].get("class"),
+        )
+
+        print(
+            "Hybrid Score:",
+            result.get("hybrid_score"),
+        )
+
+        print("Code:")
+        print(result["content"])
 
     # --------------------------------------------------
     # Reranking
     # --------------------------------------------------
 
-    results = rerank(
+    reranked_results = rerank(
         query,
         hybrid_results,
-        k=3,
+        k=30,
     )
 
-    # --------------------------------------------------
-    # Display Results
-    # --------------------------------------------------
+    print("\n" + "=" * 60)
+    print("RERANKED RESULTS")
+    print("=" * 60)
 
-    for result in results:
+    for result in reranked_results:
 
-        print(
-            "\n--- RERANKED RESULT ---"
-        )
+        print("\n--- RERANKED RESULT ---")
 
         print(
             "File:",
-            result["metadata"].get("file")
+            result["metadata"].get("file"),
         )
 
         print(
             "Function:",
-            result["metadata"].get(
-                "function"
-            )
+            result["metadata"].get("function"),
         )
 
         print(
             "Class:",
-            result["metadata"].get(
-                "class"
-            )
+            result["metadata"].get("class"),
         )
 
         print(
             "Hybrid Score:",
-            result.get(
-                "hybrid_score"
-            )
+            result.get("hybrid_score"),
         )
 
         print(
             "Rerank Score:",
-            result["rerank_score"]
+            result.get("rerank_score"),
         )
 
-        print(
-            "Code:"
-        )
-
-        print(
-            result["content"]
-        )
+        print("Code:")
+        print(result["content"])

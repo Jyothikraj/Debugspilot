@@ -20,7 +20,6 @@ collection = client.get_or_create_collection(
 # ======================================================
 
 def sanitize_metadata(metadata):
-
     clean_metadata = {}
 
     for key, value in metadata.items():
@@ -56,11 +55,41 @@ def sanitize_metadata(metadata):
 
 
 # ======================================================
+# Embedding Text
+# ======================================================
+
+def get_embedding_text(chunk):
+    metadata = chunk.get(
+        "metadata",
+        {}
+    )
+
+    summary = metadata.get(
+        "summary",
+        ""
+    ).strip()
+
+    content = chunk.get(
+        "content",
+        ""
+    ).strip()
+
+    if summary:
+        return (
+            f"Summary:\n"
+            f"{summary}\n\n"
+            f"Code:\n"
+            f"{content}"
+        )
+
+    return content
+
+
+# ======================================================
 # Embedding
 # ======================================================
 
 def get_embedding(text):
-
     response = ollama.embed(
         model="nomic-embed-text",
         input=text,
@@ -75,7 +104,9 @@ def get_embedding(text):
 
 def store_chunks(chunks):
 
-    print("\n[Chroma] store_chunks() called")
+    print(
+        "\n[Chroma] store_chunks() called"
+    )
 
     ids = []
     documents = []
@@ -148,16 +179,39 @@ def store_chunks(chunks):
             chunk_id
         )
 
+        # --------------------------------------------------
+        # IMPORTANT:
+        # Store ORIGINAL CODE as document
+        # --------------------------------------------------
+
         documents.append(
             content
         )
+
+        # --------------------------------------------------
+        # Store metadata including summary
+        # --------------------------------------------------
 
         metadatas.append(
             metadata
         )
 
+        # --------------------------------------------------
+        # Embed SUMMARY + CODE
+        # --------------------------------------------------
+
+        embedding_text = get_embedding_text(
+            chunk
+        )
+
+        print(
+            "[Chroma] Embedding summary + code..."
+        )
+
         embeddings.append(
-            get_embedding(content)
+            get_embedding(
+                embedding_text
+            )
         )
 
     if not ids:

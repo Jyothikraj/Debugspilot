@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard · CodeSense</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Theme initialization (prevents screen flashing) -->
+    <script src="js/theme.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="dashboard.html" class="logo">
+            <span class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m16 18 6-6-6-6"/>
+                    <path d="m8 6-6 6 6 6"/>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+            </span>
+            Code<span>Sense</span>
+        </a>
+
+        <div class="nav-links">
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+                🌙
+            </button>
+
+            <button id="logoutButton" class="nav-button">
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <main class="dashboard-page">
+
+        <!-- Existing Repositories -->
+        <section id="repositoriesListSection" class="dashboard-card repositories-section">
+            <div class="dashboard-header">
+                <div class="dashboard-badge">
+                    YOUR REPOSITORIES
+                </div>
+
+                <h1>Your codebases</h1>
+
+                <p>
+                    Repositories you have previously indexed with CodeSense.
+                </p>
+            </div>
+
+            <div id="repositoriesList" class="repositories-list">
+                <p>Loading repositories...</p>
+            </div>
+        </section>
+
+        <!-- Repository Setup -->
+        <section id="repositorySection" class="dashboard-card">
+
+            <div class="dashboard-header">
+                <div class="dashboard-badge">
+                    STEP 1
+                </div>
+
+                <h1>
+                    Connect your repository
+                </h1>
+
+                <p>
+                    Provide a public or private GitHub repository link so CodeSense can index and unpack your codebase.
+                </p>
+            </div>
+
+            <form id="repositoryForm">
+
+                <div class="form-group">
+                    <label for="repoUrl">
+                        GitHub Repository URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="repoUrl"
+                        placeholder="https://github.com/user/repository"
+                        required
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="auth-button"
+                    id="analyzeButton"
+                >
+                    Index Repository
+                </button>
+
+            </form>
+
+            <p id="repositoryMessage" class="auth-message"></p>
+
+        </section>
+
+        <!-- Loading / Ingestion -->
+        <section id="loadingSection" class="dashboard-card loading-card hidden">
+
+            <div class="dashboard-header">
+                <div class="dashboard-badge">
+                    ANALYZING
+                </div>
+
+                <h1>
+                    Reading your codebase
+                </h1>
+
+                <p>
+                    CodeSense is dissecting your architecture and indexing logic paths.
+                </p>
+            </div>
+
+            <div class="ingestion-steps">
+
+                <div class="ingestion-step" id="step-cloning">
+                    <span class="step-icon">○</span>
+                    <span>Cloning repository</span>
+                </div>
+
+                <div class="ingestion-step" id="step-parsing">
+                    <span class="step-icon">○</span>
+                    <span>Parsing syntax trees & files</span>
+                </div>
+
+                <div class="ingestion-step" id="step-chunking">
+                    <span class="step-icon">○</span>
+                    <span>Chunking code modules</span>
+                </div>
+
+                <div class="ingestion-step" id="step-embedding">
+                    <span class="step-icon">○</span>
+                    <span>Generating semantic embeddings</span>
+                </div>
+
+                <div class="ingestion-step" id="step-storing">
+                    <span class="step-icon">○</span>
+                    <span>Storing code vectors</span>
+                </div>
+
+                <div class="ingestion-step" id="step-preparing">
+                    <span class="step-icon">○</span>
+                    <span>Initializing explanation model</span>
+                </div>
+
+            </div>
+
+            <p class="loading-note">
+                This may take a minute depending on repository size...
+            </p>
+
+        </section>
+
+        <!-- Success -->
+        <section id="successSection" class="dashboard-card success-card hidden">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <h1>
+                Repository Indexed
+            </h1>
+
+            <p>
+                Your codebase is fully mapped and ready to explain.
+            </p>
+
+            <button id="openChatButton" class="auth-button">
+                Start Asking Questions
+            </button>
+
+        </section>
+
+        <!-- Failure -->
+        <section id="failureSection" class="dashboard-card hidden">
+
+            <div class="failure-icon">
+                !
+            </div>
+
+            <h1>
+                Indexing Failed
+            </h1>
+
+            <p id="failureMessage">
+                Something went wrong while indexing your repository.
+            </p>
+
+            <button id="tryAgainButton" class="auth-button">
+                Try Again
+            </button>
+
+        </section>
+
+    </main>
+
+    <script src="js/dashboard.js"></script>
+
+</body>
+</html>
